@@ -154,11 +154,11 @@ PASS=9 WARN=0 ERROR=0
 
 ### Data Freshness SLA
 
-| Table         | Frequency | Records | Date Range          | Source           |
---------------------------------------------------------------------------------
-| LABOR_FORCE   | Monthly   | 578     | Feb 1978 - Mar 2026 | ABS Table 6202.0 |
-| WAGES         | Quarterly | 63      | Nov 1994 - Nov 2025 | ABS Table 6302.0 |
-| JOB_VACANCIES | Quarterly | 188     | May 1979 - Feb 2026 | ABS Table 6354.0 |
+| Dataset | Update Schedule | Release Latency |
+|---------|-----------------|-----------------|
+| Labor Force | Monthly | 2-3 weeks after month-end |
+| Wages | Quarterly | 4 weeks after quarter-end |
+| Job Vacancies | Quarterly | 2-3 weeks after quarter-end |
 
 
 
