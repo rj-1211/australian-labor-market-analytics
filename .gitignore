@@ -216,3 +216,13 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+.env
+venv/
+*.pyc
+__pycache__/
+target/
+dbt_packages/
+logs/
+.env.local
+profiles.yml
