@@ -226,3 +226,5 @@ dbt_packages/
 logs/
 .env.local
 profiles.yml
+"rsa_key.p8" 
+"rsa_key.pem" 
