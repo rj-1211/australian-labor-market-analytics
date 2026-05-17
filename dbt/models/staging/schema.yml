@@ -1,0 +1,244 @@
+version: 2
+
+sources:
+  - name: raw
+    database: LABOR_DB
+    schema: RAW
+    description: Raw data directly from Australian Bureau of Statistics. Messy column names, multiple adjustment types, minimal cleaning.
+    tables:
+      - name: LABOR_FORCE
+        description: Monthly employment and unemployment data from ABS Table 6202.0
+      - name: WAGES
+        description: Quarterly average weekly earnings from ABS Table 6302.0
+      - name: JOB_VACANCIES
+        description: Quarterly job vacancy counts from ABS Table 6354.0
+
+models:
+  - name: stg_labor_force
+    description: |
+      Clean labour force data showing employment, unemployment, and participation trends.
+      
+      This is the foundation for understanding Australian labor market health. It answers:
+      - How many people have jobs?
+      - How many are looking for work but can't find it?
+      - What percentage of working-age people want to work?
+      
+      Data goes back to February 1978. Updated monthly by ABS.
+      All numbers are in thousands (so 10,500 means 10.5 million people).
+    
+    columns:
+      - name: period_date
+        description: |
+          The month when employment was measured. Always the 1st of the month.
+          Example: 2026-03-01 means March 2026 data.
+          Use this to join with wages and vacancies data.
+        tests:
+          - not_null
+          - unique
+
+      - name: employed_persons_trend
+        description: |
+          Total number of people with jobs in thousands.
+          Example: 10,500 means 10.5 million employed.
+          This is the trend-adjusted version (smoothed).
+          Use for spotting patterns and trends.
+        tests:
+          - not_null
+
+      - name: employed_persons_sa
+        description: |
+          Same employment number but seasonally adjusted.
+          Removes impact of holidays and school breaks.
+          Use when you want to isolate what's really happening.
+
+      - name: employed_males_trend
+        description: |
+          How many men have jobs. Trend version.
+          Compare this to employed_females to see gender patterns.
+          Typically slightly lower than females in Australia.
+
+      - name: employed_females_trend
+        description: |
+          How many women have jobs. Trend version.
+          Use alongside employed_males to track gender balance.
+          Generally higher than males in recent years.
+
+      - name: unemployed_persons_trend
+        description: |
+          People actively looking for work but without a job, in thousands.
+          These are people in the labor force but without employment.
+          During recessions this number spikes. During booms it falls.
+
+      - name: unemployment_rate_trend
+        description: |
+          The percentage calculated as (Unemployed ÷ Labour Force) × 100.
+          If 5%, then 1 in 20 people wanting to work can't find a job.
+          Economists consider 3-4% full employment.
+          Above 6% is concerning. Above 8% is serious.
+        tests:
+          - not_null
+
+      - name: labour_force_total_trend
+        description: |
+          Total number of people either employed or actively job hunting.
+          This is employed plus unemployed.
+          When this grows, more people are entering workforce.
+          Could mean economic confidence or forced labor participation.
+
+      - name: participation_rate_trend
+        description: |
+          Percentage of working-age population in the labor force.
+          Formula: (Labour Force ÷ Working Age Population) × 100.
+          Australia's rate is typically 65-66%.
+          Higher rates mean economic confidence or economic pressure.
+        tests:
+          - not_null
+
+      - name: dbt_loaded_at
+        description: |
+          When this data was processed by our pipeline.
+          Useful for auditing and knowing how fresh the data is.
+
+      - name: source_table
+        description: |
+          Always "LABOR_FORCE".
+          Helps remember which source this came from when joining.
+
+  - name: stg_wages
+    description: |
+      Average weekly earnings across Australia. Broken down by gender and employment type.
+      
+      This is how we track if workers are getting paid better over time.
+      Also shows the wage gap between men and women.
+      
+      Quarterly data (every 3 months). Goes back to November 1994.
+      NOT adjusted for inflation. These are nominal dollars.
+    
+    columns:
+      - name: period_date
+        description: |
+          End of quarter. So 1994-11-15 means Q3 1994 data.
+          ABS releases this about 4 weeks after quarter ends.
+          Join to labor_force using DATETRUNC on the month.
+        tests:
+          - not_null
+          - unique
+
+      - name: earnings_males_fulltime_ordinary
+        description: |
+          Average weekly ordinary hours earnings for full-time male workers.
+          Ordinary hours means base pay without overtime.
+          This is the benchmark for male pay.
+          Usually 1200 to 2100 dollars per week depending on year.
+
+      - name: earnings_males_fulltime_total
+        description: |
+          Same group but including overtime pay.
+          So this is higher than ordinary hours version.
+          Shows actual take-home for full-time male workers.
+
+      - name: earnings_males_total
+        description: |
+          All male workers combined (full-time and part-time).
+          Lower than full-time only because part-timers earn less.
+          Use this to compare male versus female earnings overall.
+
+      - name: earnings_females_fulltime_ordinary
+        description: |
+          Ordinary hours earnings for full-time female workers.
+          Typically 10 to 15 percent lower than males for same role.
+          This gap has been shrinking slowly but still exists.
+
+      - name: earnings_females_fulltime_total
+        description: |
+          Full-time female earnings including overtime.
+          Again lower than males doing same hours.
+          Important metric for pay equity discussions.
+
+      - name: earnings_females_total
+        description: |
+          All female workers (full-time and part-time).
+          Part-time work is more common for women which affects this number.
+          Compare to earnings_males_total to see gender pay gap.
+
+      - name: earnings_persons_fulltime_ordinary
+        description: |
+          Ordinary hours pay for all full-time workers (men plus women).
+          This is what headlines use for average Aussie earnings.
+          Middle ground between male and female figures.
+
+      - name: earnings_persons_fulltime_total
+        description: |
+          Total weekly pay with overtime for all full-time workers.
+          The most realistic actual earnings number for full-time job.
+
+      - name: earnings_persons_total
+        description: |
+          Everyone combined. Full-time, part-time, all sectors, all genders.
+          Lowest number because it includes part-timers who earn less.
+          Use when comparing to previous years to see wage growth.
+        tests:
+          - not_null
+
+      - name: dbt_loaded_at
+        description: |
+          Pipeline processing timestamp.
+          Useful for knowing data freshness.
+
+      - name: source_table
+        description: |
+          Always "WAGES".
+          For tracking which source this came from.
+
+  - name: stg_job_vacancies
+    description: |
+      How many jobs are sitting empty because employers can't find workers.
+      
+      This is the flip side of unemployment. High vacancies means employers desperate to hire.
+      Low vacancies means weak demand for workers.
+      
+      The real story: When vacancies are high AND unemployment is high at the same time,
+      it means people can't do the jobs that exist. That's a skills mismatch problem.
+      
+      Quarterly data since 1979. Australia-wide totals only.
+    
+    columns:
+      - name: period_date
+        description: |
+          End of quarter. So 2026-02-15 means Q4 2025 vacancy counts.
+          This is 2-3 weeks after quarter ends when ABS publishes.
+        tests:
+          - not_null
+          - unique
+
+      - name: vacancies_australia_trend
+        description: |
+          Number of unfilled jobs across all of Australia in thousands.
+          2020 COVID: dropped to 30k.
+          2021-2022 boom: peaked at 300k.
+          2024 cooling: back to 150k.
+          Higher = strong hiring. Lower = weak job market.
+        tests:
+          - not_null
+
+      - name: vacancies_australia_sa
+        description: |
+          Same data but seasonally adjusted.
+          Removes seasonal patterns like more hiring before Christmas.
+          Use when you want underlying trend without seasonal noise.
+
+      - name: vacancies_australia_original
+        description: |
+          Raw unadjusted vacancy counts.
+          These jump around due to seasonal hiring.
+          Usually not used for analysis but included for completeness.
+
+      - name: dbt_loaded_at
+        description: |
+          When the pipeline processed this data.
+          Audit trail for data freshness.
+
+      - name: source_table
+        description: |
+          Always "JOB_VACANCIES".
+          Helps track data lineage when joined with other tables.

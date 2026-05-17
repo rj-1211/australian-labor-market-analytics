@@ -1,0 +1,23 @@
+name: 'labor_market_analytics'
+version: '1.0.0'
+config-version: 2
+
+profile: 'labor_market_analytics'
+
+model-paths: ["dbt/models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  labor_market_analytics:
+    staging:
+      materialized: view
+    marts:
+      materialized: table

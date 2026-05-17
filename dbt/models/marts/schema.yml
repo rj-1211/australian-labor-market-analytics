@@ -1,0 +1,86 @@
+version: 2
+
+models:
+  - name: fct_labor_market
+    description: |
+      Complete labor market fact table combining employment, wages, and job vacancies.
+      This is the analytical layer that enables case study insights about Australia's labor market.
+      
+      One row per period (monthly) with all metrics aligned.
+      Wages and vacancies are quarterly - joined to closest month.
+      
+      Business use: Track employment health, wage equity, skills mismatch over time.
+    
+    columns:
+      - name: period_date
+        description: Month of measurement (always 1st of month)
+        tests:
+          - not_null
+          - unique
+      
+      - name: employed_persons_trend
+        description: Total employed persons (thousands, trend-adjusted)
+      
+      - name: employed_males_trend
+        description: Male employment (thousands, trend-adjusted)
+      
+      - name: employed_females_trend
+        description: Female employment (thousands, trend-adjusted)
+      
+      - name: unemployed_persons_trend
+        description: Active job seekers without work (thousands, trend)
+      
+      - name: unemployment_rate_trend
+        description: Unemployment rate as percentage (Unemployed ÷ Labor Force × 100)
+      
+      - name: participation_rate_trend
+        description: Labor force participation as percentage of working-age population
+      
+      - name: earnings_persons_total
+        description: Average weekly earnings for all persons ($/week)
+      
+      - name: earnings_males_total
+        description: Average weekly earnings for all males ($/week, full-time + part-time)
+      
+      - name: earnings_females_total
+        description: Average weekly earnings for all females ($/week, full-time + part-time)
+      
+      - name: gender_wage_gap_percent
+        description: |
+          Gender wage gap as percentage.
+          Formula: (Male earnings - Female earnings) / Female earnings × 100
+          Positive = males earn more. Target is 0%.
+      
+      - name: vacancies_australia_trend
+        description: Unfilled job positions (thousands, trend-adjusted)
+      
+      - name: vacancies_australia_sa
+        description: Unfilled job positions (thousands, seasonally adjusted)
+      
+      - name: vacancies_per_unemployed_person
+        description: |
+          Vacancy-to-unemployed ratio (vacancies ÷ unemployed persons).
+          Metric for skills mismatch:
+          - >1.0 = More jobs than workers (severe shortage)
+          - 0.5-1.0 = Moderate gap
+          - <0.5 = Adequate labor supply
+      
+      - name: labor_market_condition
+        description: |
+          Business classification of market health:
+          - Severe Skills Shortage: ratio >1.0
+          - Moderate Skills Gap: ratio 0.5-1.0
+          - Adequate Labor Supply: ratio <0.5
+      
+      - name: dbt_loaded_at
+        description: Pipeline timestamp when row was processed
+        tests:
+          - not_null
+
+# Addng fact table tests
+tests:
+  - name: fct_labor_market_no_future_dates
+    description: Fact table should not contain future dates
+    sql: |
+      select * from {{ ref('fct_labor_market') }}
+      where period_date > current_date()

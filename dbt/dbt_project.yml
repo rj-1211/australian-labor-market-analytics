@@ -1,0 +1,16 @@
+name: 'labor_market_analytics'
+version: '1.0.0'
+config-version: 2
+
+profile: 'labor_market_analytics'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+
+models:
+  labor_market_analytics:
+    staging:
+      materialized: view
+    marts:
+      materialized: table
