@@ -28,19 +28,19 @@ This project demonstrates end-to-end data engineering best practices:
 
 Architecture
 RAW LAYER (Snowflake)
-├── LABOR\_FORCE (monthly, 578 observations)
+├── LABOR_FORCE (monthly, 578 observations)
 ├── WAGES (quarterly, 63 observations)
-└── JOB\_VACANCIES (quarterly, 188 observations)
+└── JOB_VACANCIES (quarterly, 188 observations)
 ↓
 STAGING LAYER (dbt views - cleaned \& standardized)
-├── stg\_labor\_force (11 business metrics)
-├── stg\_wages (12 earning metrics)
-└── stg\_job\_vacancies (6 vacancy metrics)
+├── stg_labor_force (11 business metrics)
+├── stg_wages (12 earning metrics)
+└── stg_job_vacancies (6 vacancy metrics)
 ↓
 ANALYTICS LAYER (dbt fact table - combined analysis)
-└── fct\_labor\_market (29 metrics + business logic)
+└── fct_labor_market (29 metrics + business logic)
 ↓
-DASHBOARDS (Power BI / Tableau / Direct Query)
+DASHBOARDS (Power BI )
 └── Interactive labor market insights
 
 
@@ -55,28 +55,28 @@ australian-labor-market-analytics/
 ├── .env                         ← Local config 
 │
 ├── dbt/                         ← dbt project
-│   ├── dbt\_project.yml
+│   ├── dbt_project.yml
 │   └── models/
 │     ├── staging/
-│          ├── stg\_labor\_force.sql
-│          ├── stg\_wages.sql
-│          ├── stg\_job\_vacancies.sql
+│          ├── stg_labor\_force.sql
+│          ├── stg_wages.sql
+│          ├── stg_job_vacancies.sql
 │              ↓                                                                                                                        
 │             ANALYTICS LAYER (dbt table - combined fact table)                
-│                 └── fct\_labor\_market (employment + wages + vacancies combined)
+│                 └── fct_labor_market (employment + wages + vacancies combined)
 ├── data/
 │   ├── raw/                     ← ABS Excel files
-│   │   ├── labour\_force\_status.xlsx
-│   │   ├── avg\_weekly\_earnings.xlsx
-│   │   └── job\_vacancies.xlsx
+│   │   ├── labour_force_status.xlsx
+│   │   ├── avg_weekly_earnings.xlsx
+│   │   └── job_vacancies.xlsx
 │   └── processed/               ← CSV
-│       ├── labor\_force.csv
+│       ├── labor_force.csv
 │       ├── wages.csv
-│       └── job\_vacancies.csv
+│       └── job_vacancies.csv
 │
 └── src/
-    ├── parse\_abs\_data.py        ← Excel to CSV py
-    └── load\_to\_snowflake.py     ← Data loading
+    ├── parse_abs_data.py        ← Excel to CSV py
+    └── load_to_snowflake.py     ← Data loading
 
 
 
@@ -98,24 +98,25 @@ australian-labor-market-analytics/
 
 ```bash
 # 1. Clone repo
-git clone https://github.com/YOUR\_USERNAME/australian-labor-market-analytics.git
+git clone https://github.com/YOUR_USERNAME/australian-labor-market-analytics.git
 cd australian-labor-market-analytics
 
 # 2. Create virtual environment
 python -m venv venv
-venv\\Scripts\\activate  # Windows
-source venv/bin/activate  # Mac/Linux
+venv\Scripts\activate  # Windows
+
 
 # 3. Install dependencies
 pip install -r requirements.txt
 
 # 4. Configure .env file
 # Create .env file with your Snowflake credentials:
-# SNOWFLAKE\_ACCOUNT=your\_account
-# SNOWFLAKE\_USER=your\_user
-# SNOWFLAKE\_TOKEN=your\_token
-# SNOWFLAKE\_WAREHOUSE=COMPUTE\_WH
-# SNOWFLAKE\_DATABASE=LABOR\_DB
+# SNOWFLAKE_ACCOUNT=your_account
+# SNOWFLAKE_USER=your_user
+# SNOWFLAKE_TOKEN=your_token
+# SNOWFLAKE_WAREHOUSE=COMPUTE_WH
+# SNOWFLAKE_DATABASE=LABOR_DB
+
 
 # 5. Run dbt
 dbt debug          # Test Snowflake connection
@@ -153,11 +154,11 @@ PASS=9 WARN=0 ERROR=0
 
 ### Data Freshness SLA
 
-|Dataset|Frequency|Update Latency|Next Update Expected|
-|-|-|-|-|
-|Labor Force|Monthly|2-3 weeks|Monthly (end of month)|
-|Wages|Quarterly|4 weeks|Every 3 months|
-|Job Vacancies|Quarterly|2-3 weeks|Every 3 months|
+| Table         | Frequency | Records | Date Range          | Source           |
+--------------------------------------------------------------------------------
+| LABOR_FORCE   | Monthly   | 578     | Feb 1978 - Mar 2026 | ABS Table 6202.0 |
+| WAGES         | Quarterly | 63      | Nov 1994 - Nov 2025 | ABS Table 6302.0 |
+| JOB_VACANCIES | Quarterly | 188     | May 1979 - Feb 2026 | ABS Table 6354.0 |
 
 
 
@@ -186,21 +187,21 @@ Key Metrics Explained
 
 ### Labor Force Model (Monthly, 11 metrics)
 
-|Metric|Unit|Business Definition|
-|-|-|-|
-|**period\_date**|DATE|Month of measurement (always 1st of month)|
-|**employed\_persons\_trend**|Thousands|Total employed persons (smoothed trend)|
-|**employed\_persons\_sa**|Thousands|Total employed (seasonally adjusted)|
-|**employed\_males\_trend**|Thousands|Male employment (trend version)|
-|**employed\_females\_trend**|Thousands|Female employment (trend version)|
-|**unemployed\_persons\_trend**|Thousands|Active job seekers without work|
-|**unemployment\_rate\_trend**|Percent|(Unemployed ÷ Labor Force) × 100|
-|**labour\_force\_total\_trend**|Thousands|Employed + Unemployed|
-|**participation\_rate\_trend**|Percent|Labor force as % of working-age population|
-|**dbt\_loaded\_at**|TIMESTAMP|Pipeline processing timestamp|
-|**source\_table**|TEXT|Always "LABOR\_FORCE" for lineage tracking|
 
-**Interpretation Guide:**
+| Metric | Unit | Definition |
+|--------|------|------------|
+| period_date | DATE | Month of measurement |
+| employed_persons_trend | Thousands | Total employed (smoothed) |
+| employed_persons_sa | Thousands | Total employed (seasonally adjusted) |
+| employed_males_trend | Thousands | Male employment |
+| employed_females_trend | Thousands | Female employment |
+| unemployed_persons_trend | Thousands | Active job seekers |
+| unemployment_rate_trend | Percent | (Unemployed ÷ Labor Force) × 100 |
+| labour_force_total_trend | Thousands | Employed + Unemployed |
+| participation_rate_trend | Percent | Labor force as % of population |
+| dbt_loaded_at | TIMESTAMP | Pipeline processing timestamp |
+| source_table | TEXT | Always "LABOR_FORCE" |
+
 
 * Unemployment rate 3-4% = healthy (natural job transitions)
 * Unemployment rate 5-6% = moderate concern
@@ -208,33 +209,34 @@ Key Metrics Explained
 
 ### Wages Model (Quarterly, 12 metrics)
 
-|Metric|Unit|Business Definition|
-|-|-|-|
-|**period\_date**|DATE|End of quarter (e.g., Nov 15 for Q3)|
-|**earnings\_males\_fulltime\_ordinary**|$/week|Base pay for full-time males (no overtime)|
-|**earnings\_males\_fulltime\_total**|$/week|Full-time males including overtime|
-|**earnings\_males\_total**|$/week|All males (full-time + part-time)|
-|**earnings\_females\_fulltime\_ordinary**|$/week|Base pay for full-time females|
-|**earnings\_females\_fulltime\_total**|$/week|Full-time females including overtime|
-|**earnings\_females\_total**|$/week|All females (full-time + part-time)|
-|**earnings\_persons\_fulltime\_ordinary**|$/week|Base pay for all full-time workers|
-|**earnings\_persons\_fulltime\_total**|$/week|All full-time workers including overtime|
-|**earnings\_persons\_total**|$/week|Everyone combined (most reported figure)|
-|**dbt\_loaded\_at**|TIMESTAMP|Pipeline processing timestamp|
-|**source\_table**|TEXT|Always "WAGES" for lineage tracking|
+| Metric | Unit | Definition |
+|--------|------|------------|
+| period_date | DATE | End of quarter |
+| earnings_males_fulltime_ordinary | $/week | Base pay for full-time males |
+| earnings_males_fulltime_total | $/week | Full-time males including overtime |
+| earnings_males_total | $/week | All males (full + part-time) |
+| earnings_females_fulltime_ordinary | $/week | Base pay for full-time females |
+| earnings_females_fulltime_total | $/week | Full-time females including overtime |
+| earnings_females_total | $/week | All females (full + part-time) |
+| earnings_persons_fulltime_ordinary | $/week | Base pay for all full-time |
+| earnings_persons_fulltime_total | $/week | All full-time including overtime |
+| earnings_persons_total | $/week | Everyone combined |
+| dbt_loaded_at | TIMESTAMP | Pipeline processing timestamp |
+| source_table | TEXT | Always "WAGES" |
 
 **Gender Wage Gap:** Compare earnings\_males\_total vs earnings\_females\_total. Gap typically 10-15% (males earn more).
 
 ### Job Vacancies Model (Quarterly, 6 metrics)
 
-|Metric|Unit|Business Definition|
-|-|-|-|
-|**period\_date**|DATE|End of quarter when vacancies counted|
-|**vacancies\_australia\_trend**|Thousands|Unfilled jobs (trend-adjusted)|
-|**vacancies\_australia\_sa**|Thousands|Unfilled jobs (seasonally adjusted)|
-|**vacancies\_australia\_original**|Thousands|Raw vacancy count (not adjusted)|
-|**dbt\_loaded\_at**|TIMESTAMP|Pipeline processing timestamp|
-|**source\_table**|TEXT|Always "JOB\_VACANCIES" for tracking|
+
+| Metric | Unit | Definition |
+|--------|------|------------|
+| period_date | DATE | End of quarter |
+| vacancies_australia_trend | Thousands | Unfilled jobs (trend) |
+| vacancies_australia_sa | Thousands | Unfilled jobs (seasonally adjusted) |
+| vacancies_australia_original | Thousands | Raw vacancy count |
+| dbt_loaded_at | TIMESTAMP | Pipeline processing timestamp |
+| source_table | TEXT | Always "JOB_VACANCIES" |
 
 **Vacancy Ranges (actual data):**
 
@@ -248,16 +250,15 @@ Key Metrics Explained
 
 ### Fact Table: Labor Market (Monthly, 29 metrics + business logic)
 
-|Metric|Unit|Business Definition|
-|-|-|-|
-|**period\_date**|DATE|Month of measurement (aligned with employment data)|
-|**All Labor Force metrics**|Various|11 employment metrics (see above)|
-|**All Wages metrics**|Various|12 earning metrics (see above)|
-|**All Job Vacancy metrics**|Various|6 vacancy metrics (see above)|
-|**gender\_wage\_gap\_percent**|Percent|(Male earnings - Female earnings) / Female earnings × 100|
-|**vacancies\_per\_unemployed\_person**|Ratio|Job vacancies ÷ Unemployed persons. Indicator of skills mismatch|
-|**labor\_market\_condition**|Classification|"Severe Skills Shortage" / "Moderate Skills Gap" / "Adequate Labor Supply"|
-|**dbt\_loaded\_at**|TIMESTAMP|Pipeline processing timestamp|
+| Metric | Unit | Definition |
+|--------|------|------------|
+| All Labor Force Metrics | Various | 11 employment metrics (see above) |
+| All Wages Metrics | Various | 12 earning metrics (see above) |
+| All Job Vacancy Metrics | Various | 6 vacancy metrics (see above) |
+| gender_wage_gap_percent | Percent | (Male - Female) / Female × 100 |
+| vacancies_per_unemployed_person | Ratio | Job vacancies ÷ Unemployed |
+| labor_market_condition | Text | Shortage / Gap / Adequate Supply |
+| dbt_loaded_at | TIMESTAMP | Pipeline processing timestamp |
 
 **Purpose:** Combined fact table enables case study analysis of relationships between employment, wages, and vacancies across 48 years.
 
@@ -275,17 +276,18 @@ This fact table enables analysis of real business questions:
 
 ```sql
 select
-  period\\\_date,
-  unemployment\\\_rate\\\_trend,
-  vacancies\\\_australia\\\_trend,
-  vacancies\\\_per\\\_unemployed\\\_person,
-  labor\\\_market\\\_condition
-from labor\\\_db.staging.fct\\\_labor\\\_market
-where period\\\_date >= '2022-01-01' and period\\\_date <= '2022-12-31'
-order by period\\\_date;
+  period_date,
+  unemployment_rate_trend,
+  vacancies_australia_trend,
+  vacancies_per_unemployed_person,
+  labor_market_condition
+from labor_db.staging.fct_labor_market
+where period_date >= '2022-01-01' and period_date <= '2022-12-31'
+order by period_date;
 ```
+Finding: 2022 showed "Severe Skills Shortage" with vacancy-to-unemployed ratio reaching 1.5+. Employers couldn't find workers even as unemployment was low (3.5%).
+---
 
-**Finding:** 2022 showed "Severe Skills Shortage" with vacancy-to-unemployed ratio reaching 1.5+. Employers couldn't find workers even as unemployment was low (3.5%).
 
 \---
 
@@ -295,16 +297,15 @@ order by period\\\_date;
 
 ```sql
 select
-  period\\\_date,
-  earnings\\\_males\\\_total,
-  earnings\\\_females\\\_total,
-  gender\\\_wage\\\_gap\\\_percent
-from labor\\\_db.staging.fct\\\_labor\\\_market
-where period\\\_date >= '1995-01-01'
-order by period\\\_date;
+  period_date,
+  earnings_males_total,
+  earnings_females_total,
+  gender_wage_gap_percent
+from labor_db.staging.fct_labor_market
+where period_date >= '1995-01-01'
+order by period_date;
 ```
-
-**Finding:** Gender wage gap narrowed from \~18% (1995) to \~12% (2025). Progress evident but gap persists. Suggests policy effectiveness but more work needed.
+Finding: Gender wage gap narrowed from ~18% (1995) to ~12% (2025). Progress evident but gap persists. Suggests policy effectiveness but more work needed.
 
 \---
 
@@ -314,98 +315,84 @@ order by period\\\_date;
 
 ```sql
 select
-  period\\\_date,
-  employed\\\_persons\\\_trend,
-  unemployment\\\_rate\\\_trend,
-  vacancies\\\_australia\\\_trend,
-  labor\\\_market\\\_condition
-from labor\\\_db.staging.fct\\\_labor\\\_market
-where period\\\_date between '2019-01-01' and '2021-12-31'
-order by period\\\_date;
+  period_date,
+  employed_persons_trend,
+  unemployment_rate_trend,
+  vacancies_australia_trend,
+  labor_market_condition
+from labor_db.staging.fct_labor_market
+where period_date between '2019-01-01' and '2021-12-31'
+order by period_date;
 ```
+Finding: March 2020 saw employment drop 2.8%, unemployment spike to 7.2%, and vacancies plummet 70%. Recovery took 18 months to reach pre-COVID employment levels.
+---
 
-**Finding:** March 2020 saw employment drop 2.8%, unemployment spike to 7.2%, and vacancies plummet 70%. Recovery took 18 months to reach pre-COVID employment levels.
-
-\---
 
 ### Finding 4: Long-Term Labor Market Stability
 
-**Question:** How stable is Australia's labor market over 48 years?
-
+Question: How stable is Australia's labor market over 48 years?
 ```sql
 select
-  period\\\_date,
-  unemployment\\\_rate\\\_trend,
-  participation\\\_rate\\\_trend,
-  vacancies\\\_per\\\_unemployed\\\_person
-from labor\\\_db.staging.fct\\\_labor\\\_market
-where period\\\_date >= '1978-01-01'
-order by period\\\_date
+  period_date,
+  unemployment_rate_trend,
+  participation_rate_trend,
+  vacancies_per_unemployed_person
+from labor_db.staging.fct_labor_market
+where period_date >= '1978-01-01'
+order by period_date
 limit 500;
 ```
-
-**Finding:** Despite recessions (1991, 2008, 2020), Australia maintained participation rates 60-66% and unemployment 3-7%. Structural stability with cyclical shocks.
-
-\---
-
-
-
+Finding: Despite recessions (1991, 2008, 2020), Australia maintained participation rates 60-66% and unemployment 3-7%. Structural stability with cyclical shocks.
+---
 
 How to Extend This Project
 ---
 
 ### Add a New Metric to Staging
 
-1. Update the SQL model:
-
+Update the SQL model:
 ```sql
--- dbt/models/staging/stg\\\_labor\\\_force.sql
-cast("New Column Name" as float) as new\\\_metric\\\_name,
+-- dbt/models/staging/stg_labor_force.sql
+cast("New Column Name" as float) as new_metric_name,
 ```
-
-2. Add documentation in YAML:
-
+Add documentation in YAML:
 ```yaml
 # dbt/models/staging/schema.yml
-- name: new\\\_metric\\\_name
+- name: new_metric_name
   description: |
     What this metric means in business terms.
     Why we track it.
     How to interpret the numbers.
   tests:
-    - not\\\_null
+    - not_null
 ```
-
-3. Test and deploy:
-
+Test and deploy:
 ```bash
 dbt run
 dbt test
 dbt docs generate
-```
+
 
 ### Enhance the Fact Table
 
-Add new business logic to fct\_labor\_market.sql:
-
+Add new business logic to fct_labor_market.sql:
 ```sql
 -- Example: Add recession indicator
 case
-  when unemployment\\\_rate\\\_trend > 6.0 then 'Recession Risk'
-  when unemployment\\\_rate\\\_trend between 5.0 and 6.0 then 'Economic Weakness'
+  when unemployment_rate_trend > 6.0 then 'Recession Risk'
+  when unemployment_rate_trend between 5.0 and 6.0 then 'Economic Weakness'
   else 'Stable'
-end as economic\\\_health
+end as economic_health
 
 -- Example: Track wage-unemployment relationship
-lag(unemployment\\\_rate\\\_trend) over (order by period\\\_date) as unemployment\\\_lag\\\_1month
+lag(unemployment_rate_trend) over (order by period_date) as unemployment_lag_1month
 ```
-
 Then deploy:
-
 ```bash
-dbt run --select fct\\\_labor\\\_market
+dbt run --select fct_labor_market
 dbt test
 dbt docs generate
+```
 
 
 
@@ -425,11 +412,11 @@ dbt debug
 
 ```bash
 # Solution:
-# 1. Ensure dbt\_project.yml is in project root
-# 2. Check model paths in dbt\_project.yml
+# 1. Ensure dbt_project.yml is in project root
+# 2. Check model paths in dbt_project.yml
 # 3. Run:
 dbt parse
-dbt run --select stg\_labor\_force
+dbt run --select stg_labor_force
 ```
 
 ### Issue: Tests failing
@@ -442,60 +429,11 @@ dbt run --select stg\_labor\_force
 dbt test --debug
 
 # 4. Check timestamp:
-dbt docs serve  # View dbt\_loaded\_at column
+dbt docs serve  # View dbt_loaded_at column
 ```
 
 
-Sample Queries
----
-
-### Find wage gap trends over time
-
-```sql
-select
-  period\_date,
-  earnings\_males\_total,
-  earnings\_females\_total,
-  round((earnings\_males\_total - earnings\_females\_total) / earnings\_females\_total \* 100, 2) 
-    as wage\_gap\_percent
-from labor\_db.staging.stg\_wages
-order by period\_date desc
-limit 10;
-```
-
-### Analyze employment during recession
-
-```sql
-select
-  period\_date,
-  employed\_persons\_trend,
-  unemployment\_rate\_trend,
-  labour\_force\_total\_trend
-from labor\_db.staging.stg\_labor\_force
-where period\_date between '2020-01-01' and '2021-12-31'
-order by period\_date;
-```
-
-### Skills mismatch analysis
-
-```sql
-select
-  l.period\_date,
-  l.unemployed\_persons\_trend,
-  j.vacancies\_australia\_trend,
-  round(j.vacancies\_australia\_trend / l.unemployed\_persons\_trend, 2) 
-    as vacancies\_per\_unemployed
-from labor\_db.staging.stg\_labor\_force l
-left join labor\_db.staging.stg\_job\_vacancies j 
-  on l.period\_date = j.period\_date
-order by l.period\_date desc;
-```
-
-
-
-
-
-## Support \& Resources
+## Support & Resources
 
 ### Documentation
 
@@ -505,7 +443,7 @@ order by l.period\_date desc;
 
 ### Data Sources
 
-* ABS Table 6202.0 (Labour Force): https://www.abs.gov.au/ \[Data downloads]
+* ABS Table 6202.0 (Labour Force): https://www.abs.gov.au/ [Data downloads]
 * ABS Table 6302.0 (Average Weekly Earnings)
 * ABS Table 6354.0 (Job Vacancies)
 
@@ -532,17 +470,6 @@ All data sourced from Australian Bureau of Statistics under Creative Commons Lic
 Data is public and freely available: https://www.abs.gov.au/
 
 \---
-
-
-Next Steps
----
-
-* Connect Power BI to Snowflake
-* Build interactive labor market dashboard
-* Create wage gap analysis report
-* Build employment trends visualisation
-* Set up automated monthly refresh
-
 
 
 License
