@@ -98,7 +98,7 @@ australian-labor-market-analytics/
 
 ```bash
 # 1. Clone repo
-git clone https://github.com/YOUR_USERNAME/australian-labor-market-analytics.git
+git clone https://github.com/rj-1211/australian-labor-market-analytics.git
 cd australian-labor-market-analytics
 
 # 2. Create virtual environment
