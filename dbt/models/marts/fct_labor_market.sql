@@ -13,29 +13,52 @@ select
   l.labour_force_total_trend,
   l.participation_rate_trend,
   
-  -- WAGE METRICS (quarterly, left join to monthly)
-  w.earnings_persons_total,
-  w.earnings_males_total,
-  w.earnings_females_total,
-  round((w.earnings_males_total - w.earnings_females_total) / w.earnings_females_total * 100, 2) 
-    as gender_wage_gap_percent,
+  -- WAGE METRICS (quarterly data forward-filled to monthly)
+  last_value(w.earnings_persons_total ignore nulls) over (
+    order by l.period_date rows between unbounded preceding and current row
+  ) as earnings_persons_total,
   
-  -- VACANCY METRICS (quarterly, left join to monthly)
-  j.vacancies_australia_trend,
-  j.vacancies_australia_sa,
+  last_value(w.earnings_males_total ignore nulls) over (
+    order by l.period_date rows between unbounded preceding and current row
+  ) as earnings_males_total,
+  
+  last_value(w.earnings_females_total ignore nulls) over (
+    order by l.period_date rows between unbounded preceding and current row
+  ) as earnings_females_total,
+  
+  round((last_value(w.earnings_males_total ignore nulls) over (
+    order by l.period_date rows between unbounded preceding and current row
+  ) - last_value(w.earnings_females_total ignore nulls) over (
+    order by l.period_date rows between unbounded preceding and current row
+  )) / nullif(last_value(w.earnings_females_total ignore nulls) over (
+    order by l.period_date rows between unbounded preceding and current row
+  ), 0) * 100, 2) as gender_wage_gap_percent,
+  
+  -- VACANCY METRICS (quarterly data forward-filled to monthly)
+  last_value(j.vacancies_australia_trend ignore nulls) over (
+    order by l.period_date rows between unbounded preceding and current row
+  ) as vacancies_australia_trend,
+  
+  last_value(j.vacancies_australia_sa ignore nulls) over (
+    order by l.period_date rows between unbounded preceding and current row
+  ) as vacancies_australia_sa,
   
   -- BUSINESS LOGIC: SKILLS MISMATCH INDICATOR
-  round(j.vacancies_australia_trend / nullif(l.unemployed_persons_trend, 0), 2) 
-    as vacancies_per_unemployed_person,
+  round(last_value(j.vacancies_australia_trend ignore nulls) over (
+    order by l.period_date rows between unbounded preceding and current row
+  ) / nullif(l.unemployed_persons_trend, 0), 2) as vacancies_per_unemployed_person,
   
   case
-    when (j.vacancies_australia_trend / nullif(l.unemployed_persons_trend, 0)) > 1.0 
+    when (last_value(j.vacancies_australia_trend ignore nulls) over (
+      order by l.period_date rows between unbounded preceding and current row
+    ) / nullif(l.unemployed_persons_trend, 0)) > 1.0 
       then 'Severe Skills Shortage'
-    when (j.vacancies_australia_trend / nullif(l.unemployed_persons_trend, 0)) > 0.5 
+    when (last_value(j.vacancies_australia_trend ignore nulls) over (
+      order by l.period_date rows between unbounded preceding and current row
+    ) / nullif(l.unemployed_persons_trend, 0)) > 0.5 
       then 'Moderate Skills Gap'
     else 'Adequate Labor Supply'
   end as labor_market_condition,
-  
   
   current_timestamp() as dbt_loaded_at
 
